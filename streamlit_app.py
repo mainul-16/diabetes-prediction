@@ -1,51 +1,56 @@
-import threading
-import time
 import streamlit as st
+import joblib
+import numpy as np
+import matplotlib.pyplot as plt
 
-# Page config
-st.set_page_config(
-    page_title="Diabetes Prediction System",
-    page_icon="🩺",
-    layout="wide"
-)
+# Load model
+model = joblib.load("model/diabetes_model.pkl")
+scaler = joblib.load("model/scaler.pkl")
 
-# Import Gradio app
-from app import demo
+st.set_page_config(page_title="Diabetes Prediction", layout="wide")
 
-# Launch Gradio in background
-@st.cache_resource
-def launch_gradio():
-    def _run():
-        demo.launch(
-            server_name="127.0.0.1",
-            server_port=7860,
-            share=False,
-            quiet=True,
-            prevent_thread_lock=True
-        )
-    t = threading.Thread(target=_run, daemon=True)
-    t.start()
-    time.sleep(3)
-    return "running"
+st.title("🩺 Diabetes Prediction System")
 
-launch_gradio()
+# Inputs
+col1, col2 = st.columns(2)
 
-# UI Header
-st.markdown("""
-<h1 style='text-align:center;'>🩺 Diabetes Prediction System</h1>
-<p style='text-align:center;'>Gradio UI embedded inside Streamlit</p>
-<hr>
-""", unsafe_allow_html=True)
+with col1:
+    pregnancies = st.slider("Pregnancies", 0, 17, 3)
+    glucose = st.slider("Glucose", 0, 200, 120)
+    blood_pressure = st.slider("Blood Pressure", 0, 122, 72)
+    skin_thickness = st.slider("Skin Thickness", 0, 99, 23)
 
-# Embed Gradio
-st.components.v1.iframe(
-    src="http://localhost:7860",
-    height=800
-)
+with col2:
+    insulin = st.slider("Insulin", 0, 846, 79)
+    bmi = st.slider("BMI", 0.0, 67.0, 32.0)
+    dpf = st.slider("Diabetes Pedigree Function", 0.0, 2.5, 0.47)
+    age = st.slider("Age", 21, 100, 33)
 
-# Footer
-st.markdown("""
-<p style='text-align:center; font-size:0.8rem; color:gray;'>
-⚕️ For educational purposes only. Not a substitute for medical advice.
-</p>
-""", unsafe_allow_html=True)
+# Predict
+if st.button("Predict"):
+    data = np.array([[pregnancies, glucose, blood_pressure,
+                      skin_thickness, insulin, bmi, dpf, age]])
+    
+    scaled = scaler.transform(data)
+    pred = model.predict(scaled)[0]
+    prob = model.predict_proba(scaled)[0][1] * 100
+
+    # Result
+    st.subheader("📊 Result")
+    st.write(f"**Status:** {'DIABETIC' if pred==1 else 'NON-DIABETIC'}")
+    st.write(f"**Probability:** {prob:.2f}%")
+
+    # Chart
+    fig, ax = plt.subplots()
+    ax.bar(["Risk"], [prob])
+    ax.set_ylim(0, 100)
+    st.pyplot(fig)
+
+    # Feature importance
+    st.subheader("🔍 Feature Importance")
+    fig2, ax2 = plt.subplots()
+    ax2.barh(
+        ["Preg", "Glucose", "BP", "Skin", "Insulin", "BMI", "DPF", "Age"],
+        model.feature_importances_
+    )
+    st.pyplot(fig2)
