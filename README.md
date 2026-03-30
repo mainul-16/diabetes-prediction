@@ -92,7 +92,7 @@ You should see output like:
 python app.py
 ```
 
-Then open your browser at: **http://localhost:7860**
+Then open your browser at: **https://diabetes-prediction-p.streamlit.app/**
 
 ---
 
