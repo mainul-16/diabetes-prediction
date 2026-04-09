@@ -92,7 +92,8 @@ You should see output like:
 python app.py
 ```
 
-Then open your browser at: **https://diabetes-prediction-p.streamlit.app/**
+Then open your browser at: It will run in Localhost
+**https://diabetes-prediction-p.streamlit.app/** (Deployed)
 
 ---
 
